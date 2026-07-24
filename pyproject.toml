@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "melodie-kimini"
+version = "3.1.0"
+description = "Melodie-Kimini GODLIKE CLI - 56 AI Models, Karma Power Points, MA Token Crypto Economy, Enterprise Business Ranking, Social Media Sharing"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Melodiespark Inc", email = "team@melodiespark.com"},
+]
+keywords = ["ai", "karma", "crypto", "enterprise", "cli", "models", "tokens"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "click>=8.0",
+    "rich>=13.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning"
+Repository = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning"
+Issues = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning/issues"
+
+[project.scripts]
+Melodie-Kimini = "melodie_kimini.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["melodie_kimini*"]
+
+[tool.setuptools.package-data]
+melodie_kimini = ["*.json"]

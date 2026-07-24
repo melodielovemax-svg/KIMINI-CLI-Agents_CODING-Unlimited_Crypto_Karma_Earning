@@ -1,0 +1,13 @@
+provider:
+  name: kimi
+
+models:
+
+  - id: kimi-56
+    version: "56"
+    context_window: auto
+    capabilities:
+      - reasoning
+      - coding
+      - analysis
+      - long_context
