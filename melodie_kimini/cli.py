@@ -939,6 +939,468 @@ def god_interactive(model=None):
 
 
 # ============================================================
+#  GODLIKE: CENTERED INTERACTIVE CLI TOOLBOX
+#  Like Gemini CLI, Kilo, GitHub Copilot, Devin, Cursor
+# ============================================================
+
+def god_toolbox_header():
+    """Show the centered toolbox header with status."""
+    console.print()
+    console.print(
+        Panel(
+            Align.center(
+                Text(BANNER_LOGO, style="bold " + GOD.CYAN)
+            ),
+            border_style=GOD.CYAN,
+            box=box.HEAVY,
+            padding=(0, 0),
+            title="[bold " + GOD.GOLD + "]>> M E L O D I E - K I M I N I <<[/]",
+            subtitle="[dim]GODLIKE COMMAND CENTER v3.1.0 | " + ts_full() + "[/]",
+        )
+    )
+
+    status_line = (
+        "[bold " + GOD.WHITE + "]56 MODELS  /  UNLIMITED TOKENS  /  "
+        "MAXIMUM EFFICIENCY[/]"
+    )
+    console.print(
+        Panel(
+            Align.center(Text.from_markup(status_line)),
+            border_style=GOD.GOLD,
+            box=box.DOUBLE,
+            padding=(0, 2),
+        )
+    )
+
+    try:
+        from .proxy import ProxyRouter
+        router = ProxyRouter()
+        warning = router.get_offline_warning()
+        if warning:
+            console.print(
+                Panel(
+                    Align.center(
+                        Text.from_markup(
+                            "[bold bright_yellow]!! " + warning["warning"] + " !![/]\n"
+                            "[bright_yellow]" + warning["detail"] + "[/]"
+                        )
+                    ),
+                    border_style="bright_yellow",
+                    box=box.HEAVY,
+                    padding=(0, 2),
+                    title="[bold bright_yellow]>> OFFLINE MODE <<[/]",
+                )
+            )
+    except Exception:
+        pass
+
+
+def god_toolbox_grid():
+    """Show the centered quick action grid + command table side by side."""
+    left_actions = Table(show_header=False, box=None, padding=(0, 0), expand=True)
+    left_actions.add_column("A", style="bold " + GOD.CYAN, no_wrap=True)
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+L[/] [dim]Launch[/]")
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+C[/] [dim]Chat[/]")
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+M[/] [dim]Models[/]")
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+S[/] [dim]Select[/]")
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+B[/] [dim]Bench[/]")
+    left_actions.add_row("[" + GOD.CYAN + "]ALT+Q[/] [dim]Quit[/]")
+
+    left_stats = Table(show_header=False, box=None, padding=(0, 0))
+    left_stats.add_column("K", style="bold " + GOD.CYAN, width=14)
+    left_stats.add_column("V", width=22)
+
+    import random
+    random.seed(int(time.time()))
+    tokens = [random.randint(80, 100) for _ in range(20)]
+    latency = [random.randint(1, 5) for _ in range(20)]
+    throughput = [random.randint(70, 100) for _ in range(20)]
+
+    left_stats.add_row(
+        "[" + GOD.NEON + "]Tokens[/]",
+        "[" + GOD.GREEN + "]~~~~~~~~[/] [" + GOD.DIM + "]" + sparkline(tokens) + "[/" + GOD.DIM + "]"
+    )
+    left_stats.add_row(
+        "[" + GOD.YELLOW + "]Latency[/]",
+        "[" + GOD.YELLOW + "]~~~~~~~~[/] [" + GOD.DIM + "]" + sparkline(latency, chars="..||") + "[/" + GOD.DIM + "]"
+    )
+    left_stats.add_row(
+        "[" + GOD.CYAN + "]Throughput[/]",
+        "[" + GOD.CYAN + "]~~~~~~~~[/] [" + GOD.DIM + "]" + sparkline(throughput) + "[/" + GOD.DIM + "]"
+    )
+
+    cmds = Table(
+        show_header=True,
+        header_style="bold " + GOD.GOLD,
+        box=box.HEAVY,
+        border_style=GOD.GOLD,
+        title="[bold " + GOD.GOLD + "]>> COMMAND CENTER <<[/]",
+        title_style="bold " + GOD.GOLD,
+        padding=(0, 1),
+        expand=False,
+    )
+    cmds.add_column("KEY", style="bold " + GOD.CYAN, width=5, no_wrap=True)
+    cmds.add_column("CMD", style="bold " + GOD.WHITE, width=18, no_wrap=True)
+    cmds.add_column("DOES", style=GOD.DIM, width=28, no_wrap=True)
+    cmds.add_column("HOTKEY", style="bold " + GOD.YELLOW, width=8, no_wrap=True)
+
+    cmds.add_row("[cyan]1[/]", "launch",    "Launch platform",           "L")
+    cmds.add_row("[cyan]2[/]", "chat",      "Interactive chat",          "C")
+    cmds.add_row("[cyan]3[/]", "list",      "Show all 56 models",        "M")
+    cmds.add_row("[cyan]4[/]", "info",      "Model details",             "I")
+    cmds.add_row("[cyan]5[/]", "run",       "Execute prompt",            "R")
+    cmds.add_row("[cyan]6[/]", "select",    "Visual model picker",       "S")
+    cmds.add_row("[cyan]7[/]", "bench",     "Benchmark all models",      "B")
+    cmds.add_row("[cyan]8[/]", "efficiency","Performance metrics",       "E")
+    cmds.add_row("[cyan]9[/]", "status",    "Platform status",           "T")
+    cmds.add_row("[cyan]0[/]", "quit",      "Exit platform",             "Q")
+
+    console.print(
+        Columns(
+            [
+                Panel(
+                    Columns([left_actions, left_stats], padding=(0, 1)),
+                    border_style=GOD.CYAN,
+                    box=box.ROUNDED,
+                    title="[bold " + GOD.CYAN + "]>> QUICK ACCESS[/]",
+                    width=48,
+                ),
+                cmds,
+            ],
+            padding=(0, 1),
+            expand=True,
+        )
+    )
+
+
+def god_toolbox_commands():
+    """Show all available commands in the toolbox."""
+    help_table = Table(
+        show_header=True,
+        header_style="bold " + GOD.CYAN,
+        box=box.HEAVY,
+        border_style=GOD.CYAN,
+        title="[bold " + GOD.CYAN + "]>> TOOLBOX COMMANDS <<[/]",
+        title_style="bold " + GOD.CYAN,
+        padding=(0, 1),
+        expand=False,
+    )
+    help_table.add_column("CMD", style="bold " + GOD.WHITE, width=20)
+    help_table.add_column("WHAT IT DOES", style=GOD.DIM, width=40)
+
+    help_table.add_row("[cyan]launch[/]",       "Launch the full command center")
+    help_table.add_row("[cyan]chat[/]",          "Start interactive chat")
+    help_table.add_row("[cyan]run <prompt>[/]",  "Execute a prompt")
+    help_table.add_row("[cyan]list[/]",          "Show all 56 models")
+    help_table.add_row("[cyan]select[/]",        "Open visual model picker")
+    help_table.add_row("[cyan]info[/]",          "Show current model details")
+    help_table.add_row("[cyan]bench[/]",         "Run full benchmark")
+    help_table.add_row("[cyan]efficiency[/]",    "Show performance metrics")
+    help_table.add_row("[cyan]status[/]",        "Platform status overview")
+    help_table.add_row("[cyan]karma[/]",         "Score prompt for karma")
+    help_table.add_row("[cyan]wallet[/]",        "View MA Token wallet")
+    help_table.add_row("[cyan]mine[/]",          "Start crypto mining")
+    help_table.add_row("[cyan]combo[/]",         "Combo streak & ascension")
+    help_table.add_row("[cyan]plans[/]",         "View subscription plans")
+    help_table.add_row("[cyan]enterprise[/]",    "Enterprise business ranking")
+    help_table.add_row("[cyan]proxy[/]",         "Proxy routing status")
+    help_table.add_row("[cyan]share[/]",         "Social media sharing")
+    help_table.add_row("[cyan]help[/]",          "Show this help panel")
+    help_table.add_row("[cyan]clear[/]",         "Clear the terminal")
+    help_table.add_row("[cyan]quit[/]",          "Exit the toolbox")
+
+    console.print(help_table)
+
+
+def god_toolbox_input_box():
+    """Draw a centered input box with prompt."""
+    console.print()
+    console.print(
+        Panel(
+            Align.center(
+                Text.from_markup(
+                    "[bold " + GOD.WHITE + "]Type a command or prompt below[/]\n"
+                    "[" + GOD.DIM + "]Commands: launch, chat, run, list, select, info, bench, "
+                    "efficiency, status, karma, wallet, mine, combo, plans, enterprise, "
+                    "proxy, share, help, clear, quit[/]"
+                )
+            ),
+            border_style=GOD.CYAN,
+            box=box.ROUNDED,
+            padding=(1, 4),
+            title="[bold " + GOD.CYAN + "]>> K I M I N I   T O O L B O X <<[/]",
+            subtitle="[dim]Enter 'help' for full command list | 'quit' to exit[/]",
+        )
+    )
+
+
+def god_toolbox(model=None):
+    """Centered interactive CLI toolbox - like Gemini, Kilo, Copilot, Devin, Cursor."""
+    console.clear()
+    god_toolbox_header()
+    god_toolbox_grid()
+    god_toolbox_input_box()
+    console.print()
+
+    if not model:
+        model = DEFAULT_MODEL
+    resolved = resolve_model(model)
+    if not resolved:
+        console.print("[bold " + GOD.RED + "]Unknown model: " + model + "[/]")
+        return
+
+    current_model = resolved
+    m = KIMINI_MODELS[current_model]
+    c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+
+    log_event("TOOLBOX_LAUNCH model=" + current_model)
+
+    while True:
+        try:
+            user_input = Prompt.ask(
+                "[bold " + GOD.CYAN + "]>> [/][bold " + GOD.GOLD + "]kimini[/] [dim]>[/]"
+            )
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[" + GOD.DIM + "]Goodbye.[/]")
+            break
+
+        cmd = user_input.strip().lower()
+
+        if not cmd:
+            continue
+
+        if cmd in ("quit", "exit", "q", "/quit", "/exit", "/q"):
+            console.print("[" + GOD.DIM + "]Shutting down...[/]")
+            log_event("TOOLBOX_SHUTDOWN")
+            break
+
+        if cmd == "clear":
+            console.clear()
+            god_toolbox_header()
+            god_toolbox_grid()
+            god_toolbox_input_box()
+            console.print()
+            continue
+
+        if cmd == "help":
+            god_toolbox_commands()
+            continue
+
+        if cmd == "launch":
+            console.clear()
+            god_toolbox_header()
+            god_toolbox_grid()
+            god_toolbox_input_box()
+            console.print()
+            continue
+
+        if cmd == "chat":
+            god_interactive(current_model)
+            console.clear()
+            god_toolbox_header()
+            god_toolbox_grid()
+            god_toolbox_input_box()
+            console.print()
+            continue
+
+        if cmd == "list":
+            console.clear()
+            god_banner()
+            god_letter_bar()
+            console.print()
+            console.print(god_model_selector(current=current_model))
+            console.print()
+            god_toolbox_input_box()
+            console.print()
+            continue
+
+        if cmd == "select":
+            current_model = god_visual_selector()
+            m = KIMINI_MODELS[current_model]
+            c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+            console.print("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
+            log_event("TOOLBOX_SWITCH model=" + current_model)
+            continue
+
+        if cmd == "info":
+            console.print(god_model_card(current_model))
+            continue
+
+        if cmd == "bench":
+            console.print(god_benchmark())
+            continue
+
+        if cmd == "efficiency":
+            console.print(god_efficiency())
+            continue
+
+        if cmd == "status":
+            console.clear()
+            god_full_layout()
+            console.print()
+            god_toolbox_input_box()
+            console.print()
+            continue
+
+        if cmd == "tree":
+            console.print(god_tier_tree())
+            continue
+
+        if cmd == "live":
+            console.print(god_live_stats())
+            continue
+
+        if cmd == "karma":
+            console.print("[" + GOD.DIM + "]Usage: run <prompt> to score karma[/]")
+            continue
+
+        if cmd == "wallet":
+            try:
+                from .ma_token import MATokenWallet
+                w = MATokenWallet()
+                wd = w.get_wallet("default")
+                est_daily = w.estimate_daily_earn("default")
+                wall = Table(show_header=False, box=None, padding=(0, 0))
+                wall.add_column("K", style="bold " + GOD.CYAN, width=18)
+                wall.add_column("V", style="bold " + GOD.WHITE, width=35)
+                wall.add_row("Balance",      "[" + GOD.GOLD + "]" + str(round(wd["balance"], 2)) + " MA[/]")
+                wall.add_row("Staked",       "[" + GOD.CYAN + "]" + str(round(wd["staked"], 2)) + " MA[/]")
+                wall.add_row("Total Earned", str(round(wd["total_earned"], 2)) + " MA")
+                wall.add_row("Streak",       str(wd["streak"]) + " days")
+                wall.add_row("Est. Daily",   "[" + GOD.NEON + "]" + str(est_daily) + " MA/day[/]")
+                console.print(Panel(wall, title="[bold " + GOD.GOLD + "]>> MA TOKEN WALLET <<[/]", border_style=GOD.GOLD, box=box.HEAVY, padding=(1, 2)))
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "mine":
+            try:
+                from .mining import MiningEngine
+                mining = MiningEngine()
+                block = mining.mine_block("default")
+                status = block.get("status", "unknown")
+                earned = block.get("earned", 0)
+                if status == "not_mining":
+                    console.print("[" + GOD.YELLOW + "]Not mining. Start with: mine start[/]")
+                elif status == "blocked":
+                    console.print("[" + GOD.RED + "]Mining blocked: " + block.get("reason", "unknown") + "[/]")
+                elif status == "rate_limited":
+                    console.print("[" + GOD.YELLOW + "]Rate limited. Wait a moment.[/]")
+                else:
+                    console.print("[bold " + GOD.NEON + "]Mined block! Earned: " + str(earned) + " MA[/]")
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "combo":
+            try:
+                from .combo import ComboEngine
+                combo = ComboEngine()
+                cs = combo.get_user("default")
+                streak = cs.get("streak", 0)
+                rank = cs.get("ascension_rank", "Bronze")
+                mult = cs.get("multiplier", 1.0)
+                console.print("[bold " + GOD.CYAN + "]Combo Streak:[/] " + str(streak) + " hits")
+                console.print("[bold " + GOD.GOLD + "]Ascension Rank:[/] " + rank)
+                console.print("[bold " + GOD.NEON + "]Multiplier:[/] x" + str(mult))
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "plans":
+            try:
+                from .subscription import SubscriptionEngine
+                sub = SubscriptionEngine()
+                comparison = sub.get_plan_comparison()
+                table = Table(title="[bold " + GOD.GOLD + "]>> SUBSCRIPTION PLANS <<[/]", box=box.HEAVY, border_style=GOD.GOLD, padding=(0, 1))
+                table.add_column("PLAN", width=14, style="bold")
+                table.add_column("MONTHLY", width=12)
+                table.add_column("LIFETIME", width=12)
+                table.add_column("FEATURES", width=10)
+                for p in comparison:
+                    c = p["color"]
+                    price_m = "$" + str(round(p["price"], 2)) + "/mo" if p["price"] > 0 else "FREE"
+                    price_l = "$" + str(int(p["lifetime"])) + " once" if p["lifetime"] > 0 else "-"
+                    table.add_row("[" + c + "]" + p["icon"] + " " + p["name"] + "[/" + c + "]", "[" + c + "]" + price_m + "[/" + c + "]", "[" + c + "]" + price_l + "[/" + c + "]", str(p["features_count"]))
+                console.print(table)
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "enterprise":
+            try:
+                from .enterprise import EnterpriseScorer
+                ent = EnterpriseScorer()
+                rankings = ent.get_global_rankings(limit=10)
+                table = Table(title="[bold " + GOD.GOLD + "]>> ENTERPRISE RANKINGS <<[/]", box=box.HEAVY, border_style=GOD.GOLD, padding=(0, 1))
+                table.add_column("RANK", style="bold " + GOD.CYAN, width=6)
+                table.add_column("NAME", style="bold " + GOD.WHITE, width=30)
+                table.add_column("KARMA", style=GOD.NEON, width=12)
+                table.add_column("TIER", style=GOD.GOLD, width=15)
+                for i, r in enumerate(rankings, 1):
+                    table.add_row(str(i), r["name"], str(round(r.get("crypto_karma", 0), 1)), r.get("rank", "N/A"))
+                console.print(table)
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "proxy":
+            try:
+                from .proxy import ProxyRouter
+                router = ProxyRouter()
+                status = router.get_status()
+                table = Table(title="[bold " + GOD.CYAN + "]>> PROXY STATUS <<[/]", box=box.HEAVY, border_style=GOD.CYAN, padding=(0, 1))
+                table.add_column("METRIC", style="bold " + GOD.WHITE, width=20)
+                table.add_column("VALUE", style=GOD.NEON, width=30)
+                is_on = status.get("is_online", False)
+                table.add_row("Mode", status.get("mode", "UNKNOWN"))
+                table.add_row("Online", "[green]YES[/]" if is_on else "[yellow]NO (Offline Mode)[/]")
+                table.add_row("Platforms Online", str(status.get("platforms_online", 0)))
+                table.add_row("Platforms Tracked", str(status.get("platforms_tracked", 0)))
+                console.print(table)
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "share":
+            try:
+                from .social import SOCIAL_PLATFORMS
+                table = Table(title="[bold " + GOD.MAGENTA + "]>> SOCIAL PLATFORMS <<[/]", box=box.HEAVY, border_style=GOD.MAGENTA, padding=(0, 1))
+                table.add_column("PLATFORM", style="bold " + GOD.WHITE, width=20)
+                table.add_column("CHARS", style=GOD.CYAN, width=10)
+                table.add_column("TYPE", style=GOD.DIM, width=15)
+                for pid, pdata in SOCIAL_PLATFORMS.items():
+                    table.add_row(pdata["name"], str(pdata.get("max_chars", "N/A")), pdata.get("type", "social"))
+                console.print(table)
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd.startswith("run "):
+            prompt_text = user_input.strip()[4:]
+            if prompt_text:
+                god_response(current_model, prompt_text)
+            else:
+                console.print("[" + GOD.DIM + "]Usage: run <your prompt>[/]")
+            continue
+
+        if cmd.startswith("/use "):
+            new_name = cmd[5:].strip()
+            new_resolved = resolve_model(new_name)
+            if new_resolved:
+                current_model = new_resolved
+                m = KIMINI_MODELS[current_model]
+                c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+                console.print("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
+                log_event("TOOLBOX_SWITCH model=" + current_model)
+            else:
+                console.print("[bold " + GOD.RED + "]Unknown model: " + new_name + "[/]")
+            continue
+
+        god_response(current_model, user_input)
+
+
+# ============================================================
 #  CLICK CLI GROUP
 # ============================================================
 
@@ -952,16 +1414,8 @@ def cli():
 @cli.command()
 @click.option("--model", "-m", default=None, help="Model to launch")
 def launch(model):
-    """Launch the godlike command center."""
-    if model:
-        god_interactive(model)
-    else:
-        god_full_layout()
-        console.print()
-        console.print(
-            "[" + GOD.DIM + "]Run [bold " + GOD.CYAN + "]Melodie-Kimini launch -m kimi-flash-6.9[/] or "
-            "[bold " + GOD.CYAN + "]Melodie-Kimini select[/] to begin.[/]"
-        )
+    """Launch the godlike command center with centered CLI toolbox."""
+    god_toolbox(model)
 
 
 @cli.command()
