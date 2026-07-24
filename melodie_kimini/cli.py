@@ -806,10 +806,71 @@ def god_response(model_id, prompt):
 #  GODLIKE: INTERACTIVE LAUNCH
 # ============================================================
 
-def god_interactive(model=None):
-    console.clear()
-    god_banner()
-    console.print()
+def god_chat_header(model_id):
+    """Show the chat header panel with model info."""
+    m = KIMINI_MODELS[model_id]
+    c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+    s = TIER_SIGIL.get(m["tier"], ">>")
+
+    info = Table(show_header=False, box=None, padding=(0, 0))
+    info.add_column("K", style="bold " + GOD.CYAN, width=12)
+    info.add_column("V", style="bold " + GOD.WHITE, width=28)
+
+    info.add_row("Model",    "[bold " + c + "]" + model_id + "[/]")
+    info.add_row("Tier",     "[" + c + "]" + s + " " + m["tier"].upper() + "[/]")
+    info.add_row("Context",  str(m["context"]) + " tokens")
+    info.add_row("Speed",    m["speed"])
+    info.add_row("Tokens",   "[bold " + GOD.NEON + "]UNLIMITED[/]")
+
+    console.print(
+        Panel(
+            info,
+            title="[bold " + c + "]>> " + model_id.upper() + " <<[/]",
+            border_style=c,
+            box=box.HEAVY,
+            padding=(0, 2),
+        )
+    )
+
+
+def god_chat_help():
+    """Show chat commands help."""
+    help_table = Table(
+        show_header=True,
+        header_style="bold " + GOD.CYAN,
+        box=box.HEAVY,
+        border_style=GOD.CYAN,
+        title="[bold " + GOD.CYAN + "]>> CHAT COMMANDS <<[/]",
+        padding=(0, 1),
+        expand=False,
+    )
+    help_table.add_column("CMD", style="bold " + GOD.WHITE, width=22)
+    help_table.add_column("DOES", style=GOD.DIM, width=38)
+
+    help_table.add_row("[cyan]/exit, /quit, /q[/]",  "Exit chat")
+    help_table.add_row("[cyan]/use <model>[/]",       "Switch to a different model")
+    help_table.add_row("[cyan]/info[/]",              "Show current model details")
+    help_table.add_row("[cyan]/models[/]",            "List all 56 models")
+    help_table.add_row("[cyan]/select[/]",            "Open visual model picker")
+    help_table.add_row("[cyan]/bench[/]",             "Run benchmark")
+    help_table.add_row("[cyan]/efficiency[/]",        "Performance metrics")
+    help_table.add_row("[cyan]/tree[/]",              "Model hierarchy tree")
+    help_table.add_row("[cyan]/live[/]",              "Live metrics sparklines")
+    help_table.add_row("[cyan]/clear[/]",             "Clear chat history")
+    help_table.add_row("[cyan]/history[/]",           "Show chat history")
+    help_table.add_row("[cyan]/system[/]",            "Show system info")
+    help_table.add_row("[cyan]/help[/]",              "Show this help")
+
+    console.print(help_table)
+
+
+def god_chat_box(model=None):
+    """
+    Centered chat box interface with DEEP MEMORY + GODLIKE IMPACT SCORING.
+    Like Kilo / OpenCode / Cursor but with persistent memory construction.
+    """
+    from .deep_memory import DeepMemoryEngine
+    from .deep_reasoning import DeepReasoningEngine
 
     if not model:
         model = DEFAULT_MODEL
@@ -818,67 +879,114 @@ def god_interactive(model=None):
         console.print("[bold " + GOD.RED + "]Unknown model: " + model + "[/]")
         return
 
-    m = KIMINI_MODELS[resolved]
-    c = TIER_GLOW.get(m["tier"], GOD.WHITE)
-
-    console.print(
-        Panel(
-            Text.from_markup(
-                "[bold " + c + "]>> PLATFORM LAUNCHED <<[/]\n\n"
-                "[bold " + GOD.WHITE + "]Model     : [/][bold " + c + "]" + resolved + "[/" + c + "]\n"
-                "[bold " + GOD.WHITE + "]Tier      : [/]" + tier_label(m["tier"]) + "\n"
-                "[bold " + GOD.WHITE + "]Version   : [/]v" + m["version"] + "\n"
-                "[bold " + GOD.WHITE + "]Context   : [/]" + str(m["context"]) + " tokens " + ctx_bar(m["context"]) + "\n"
-                "[bold " + GOD.WHITE + "]Speed     : [/]" + speed_bar(m["speed"]) + " " + m["speed"] + "\n"
-                "[bold " + GOD.WHITE + "]Tokens    : [/][bold " + GOD.NEON + "]UNLIMITED[/]\n"
-                "[bold " + GOD.WHITE + "]Caps      : [/]" + ", ".join(m["caps"]) + "\n"
-                "[bold " + GOD.WHITE + "]Efficiency: [/][bold " + GOD.GOLD + "]9329423949324932942394329429%[/]"
-            ),
-            title="[bold " + c + "]>> LAUNCHED: " + resolved.upper() + " <<[/]",
-            border_style=c,
-            box=box.HEAVY,
-            padding=(1, 2),
-        )
-    )
-
-    console.print()
-    console.print(
-        "[" + GOD.DIM + "]Commands: [bold " + GOD.CYAN + "]/exit[/] quit | "
-        "[bold " + GOD.CYAN + "]/models[/] list | "
-        "[bold " + GOD.CYAN + "]/use <name>[/] switch | "
-        "[bold " + GOD.CYAN + "]/info[/] details | "
-        "[bold " + GOD.CYAN + "]/select[/] picker | "
-        "[bold " + GOD.CYAN + "]/tree[/] hierarchy | "
-        "[bold " + GOD.CYAN + "]/bench[/] benchmark | "
-        "[bold " + GOD.CYAN + "]/live[/] metrics | "
-        "[bold " + GOD.CYAN + "]/help[/] help[/]"
-    )
-    console.print()
-
-    log_event("LAUNCH model=" + resolved)
+    console.clear()
 
     current_model = resolved
+    m = KIMINI_MODELS[current_model]
+    c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+
+    memory = DeepMemoryEngine()
+    reasoning = DeepReasoningEngine()
+
+    history = []
+    msg_count = 0
+    total_tokens = 0
+    total_impact = 0
+
+    god_chat_header(current_model)
+    console.print()
+
+    mem_stats = memory.get_memory_stats()
+    console.print(
+        Panel(
+            Align.center(
+                Text.from_markup(
+                    "[bold " + GOD.WHITE + "]Type a message to chat with " + current_model + "[/]\n"
+                    "[" + GOD.DIM + "]Commands: /use, /info, /models, /select, /bench, /help, /clear, /history, /memory, /knowledge, /impact, /quit[/]"
+                )
+            ),
+            border_style=GOD.DIM,
+            box=box.ROUNDED,
+            padding=(0, 2),
+            title="[bold " + GOD.CYAN + "]>> CHAT <<[/]",
+            subtitle="[dim]Deep Memory + Godlike Impact Scoring Enabled | " + str(mem_stats["total_interactions"]) + " memories stored[/]",
+        )
+    )
+    console.print()
+
+    log_event("CHAT_START model=" + current_model)
+
     while True:
         try:
-            prompt = Prompt.ask(
-                "[bold " + c + "]kimini[/] [dim]>[/]"
+            user_input = Prompt.ask(
+                "[bold " + GOD.CYAN + "]You[/] [dim]>[/]"
             )
         except (EOFError, KeyboardInterrupt):
-            console.print("\n[" + GOD.DIM + "]Goodbye.[/]")
+            console.print("\n[" + GOD.DIM + "]Chat ended.[/]")
             break
 
-        cmd = prompt.strip().lower()
+        cmd = user_input.strip().lower()
+
+        if not cmd:
+            continue
 
         if cmd in ("/exit", "/quit", "/q"):
-            console.print("[" + GOD.DIM + "]Shutting down...[/]")
-            log_event("SHUTDOWN")
+            console.print()
+            session_stats = reasoning.get_session_stats()
+            mem_stats = memory.get_memory_stats()
+            console.print(
+                Panel(
+                    Align.center(
+                        Text.from_markup(
+                            "[bold " + GOD.WHITE + "]Chat Session Summary[/]\n\n"
+                            "[bold " + GOD.CYAN + "]Messages:[/] " + str(msg_count) + "\n"
+                            "[bold " + GOD.CYAN + "]Model:[/] " + current_model + "\n"
+                            "[bold " + GOD.CYAN + "]Tokens:[/] " + str(total_tokens) + "\n"
+                            "[bold " + GOD.CYAN + "]Avg Impact:[/] " + str(session_stats["avg"]) + "/100\n"
+                            "[bold " + GOD.CYAN + "]Max Impact:[/] " + str(session_stats["max"]) + "/100\n"
+                            "[bold " + GOD.CYAN + "]Total Impact:[/] " + str(round(session_stats["total"], 1)) + "\n"
+                            "[bold " + GOD.NEON + "]Godlike Score:[/] " + str(mem_stats["godlike_score"]) + "\n"
+                            "[bold " + GOD.NEON + "]Memories:[/] " + str(mem_stats["total_interactions"]) + " stored\n"
+                            "[bold " + GOD.NEON + "]Status:[/] SESSION_ENDED"
+                        )
+                    ),
+                    title="[bold " + GOD.GOLD + "]>> GOODBYE <<[/]",
+                    border_style=GOD.GOLD,
+                    box=box.HEAVY,
+                    padding=(1, 4),
+                )
+            )
+            log_event("CHAT_END msgs=" + str(msg_count) + " impact=" + str(round(session_stats["total"], 1)))
             break
 
-        if cmd == "/models":
+        if cmd == "/help":
+            god_chat_help()
+            continue
+
+        if cmd == "/clear":
+            history.clear()
+            msg_count = 0
+            total_tokens = 0
+            total_impact = 0
             console.clear()
-            god_banner()
-            god_letter_bar()
+            god_chat_header(current_model)
             console.print()
+            console.print(
+                Panel(
+                    Align.center(Text.from_markup("[bold " + GOD.NEON + "]Chat history cleared.[/]")),
+                    border_style=GOD.NEON,
+                    box=box.ROUNDED,
+                    padding=(0, 2),
+                )
+            )
+            console.print()
+            continue
+
+        if cmd == "/info":
+            console.print(god_model_card(current_model))
+            continue
+
+        if cmd == "/models":
             console.print(god_model_selector(current=current_model))
             continue
 
@@ -886,15 +994,20 @@ def god_interactive(model=None):
             current_model = god_visual_selector()
             m = KIMINI_MODELS[current_model]
             c = TIER_GLOW.get(m["tier"], GOD.WHITE)
-            console.print("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
-            continue
-
-        if cmd == "/help":
-            god_help()
-            continue
-
-        if cmd == "/info":
-            god_model_card(current_model)
+            console.print()
+            console.print(
+                Panel(
+                    Align.center(
+                        Text.from_markup("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
+                    ),
+                    border_style=GOD.NEON,
+                    box=box.ROUNDED,
+                    padding=(0, 2),
+                )
+            )
+            god_chat_header(current_model)
+            console.print()
+            log_event("CHAT_SWITCH model=" + current_model)
             continue
 
         if cmd == "/bench":
@@ -913,13 +1026,162 @@ def god_interactive(model=None):
             console.print(god_live_stats())
             continue
 
-        if cmd == "/status":
-            god_full_layout()
+        if cmd == "/memory":
+            mem_stats = memory.get_memory_stats()
+            mem_table = Table(
+                title="[bold " + GOD.GOLD + "]>> DEEP MEMORY STATUS <<[/]",
+                box=box.HEAVY, border_style=GOD.GOLD, padding=(0, 1),
+            )
+            mem_table.add_column("METRIC", style="bold " + GOD.CYAN, width=22)
+            mem_table.add_column("VALUE", style="bold " + GOD.WHITE, width=35)
+            mem_table.add_column("BAR", style=GOD.NEON, width=12)
+
+            mem_table.add_row("Total Interactions", str(mem_stats["total_interactions"]), "")
+            mem_table.add_row("Total Tokens", str(mem_stats["total_tokens"]), "")
+            mem_table.add_row("Memory Strength", str(mem_stats["memory_strength"]) + "%", "[" + GOD.NEON + "]" + memory.get_memory_strength_bar() + "[/" + GOD.NEON + "]")
+            mem_table.add_row("Concepts Learned", str(mem_stats["concept_count"]), "")
+            mem_table.add_row("Relations Found", str(mem_stats["relation_count"]), "")
+            mem_table.add_row("Avg Impact", str(mem_stats["avg_impact"]) + "/100", "")
+            mem_table.add_row("Total Impact", str(mem_stats["total_impact"]), "")
+            mem_table.add_row("Reasoning Depth", str(mem_stats["reasoning_depth"]) + "/100", "")
+            mem_table.add_row("Godlike Score", str(mem_stats["godlike_score"]) + "/100", "[" + GOD.NEON + "]" + memory.get_godlike_bar() + "[/" + GOD.NEON + "]")
+
+            console.print(mem_table)
+
+            if mem_stats["strongest_concepts"]:
+                console.print()
+                console.print(
+                    "[" + GOD.DIM + "]Strongest Concepts: " +
+                    ", ".join(mem_stats["strongest_concepts"][:10]) + "[/]"
+                )
             continue
 
-        if cmd == "/clear":
-            console.clear()
-            god_banner()
+        if cmd == "/knowledge":
+            kg = memory.get_knowledge_graph_summary()
+            console.print()
+            console.print(
+                Panel(
+                    Align.center(
+                        Text.from_markup("[bold " + GOD.WHITE + "]>> KNOWLEDGE GRAPH <<[/]")
+                    ),
+                    border_style=GOD.MAGENTA,
+                    box=box.HEAVY,
+                    padding=(0, 2),
+                )
+            )
+            if kg["top_concepts"]:
+                concept_table = Table(
+                    title="[bold " + GOD.CYAN + "]>> TOP CONCEPTS <<[/]",
+                    box=box.ROUNDED, border_style=GOD.CYAN, padding=(0, 1),
+                )
+                concept_table.add_column("#", style=GOD.DIM, width=3)
+                concept_table.add_column("CONCEPT", style="bold " + GOD.WHITE, width=25)
+                for i, concept in enumerate(kg["top_concepts"][:15], 1):
+                    concept_table.add_row(str(i), concept)
+                console.print(concept_table)
+
+            if kg["top_relations"]:
+                console.print()
+                rel_table = Table(
+                    title="[bold " + GOD.MAGENTA + "]>> TOP RELATIONS <<[/]",
+                    box=box.ROUNDED, border_style=GOD.MAGENTA, padding=(0, 1),
+                )
+                rel_table.add_column("FROM", style="bold " + GOD.CYAN, width=18)
+                rel_table.add_column("TO", style="bold " + GOD.CYAN, width=18)
+                rel_table.add_column("WEIGHT", style=GOD.NEON, width=10)
+                for rel in kg["top_relations"][:10]:
+                    rel_table.add_row(rel["from"], rel["to"], str(rel["weight"]))
+                console.print(rel_table)
+            continue
+
+        if cmd == "/impact":
+            session_stats = reasoning.get_session_stats()
+            console.print()
+            console.print(
+                Panel(
+                    Text.from_markup(
+                        "[bold " + GOD.WHITE + "]>> SESSION IMPACT ANALYSIS <<[/]\n\n"
+                        "[bold " + GOD.CYAN + "]Messages:[/] " + str(session_stats["count"]) + "\n"
+                        "[bold " + GOD.CYAN + "]Avg Impact:[/] " + str(session_stats["avg"]) + "/100\n"
+                        "[bold " + GOD.CYAN + "]Max Impact:[/] " + str(session_stats["max"]) + "/100\n"
+                        "[bold " + GOD.CYAN + "]Min Impact:[/] " + str(session_stats["min"]) + "/100\n"
+                        "[bold " + GOD.CYAN + "]Total Impact:[/] " + str(round(session_stats["total"], 1)) + "\n"
+                        "[bold " + GOD.NEON + "]Godlike Score:[/] " + str(session_stats["godlike_avg"]) + "/1000"
+                    ),
+                    title="[bold " + GOD.GOLD + "]>> IMPACT <<[/]",
+                    border_style=GOD.GOLD,
+                    box=box.HEAVY,
+                    padding=(1, 2),
+                )
+            )
+            continue
+
+        if cmd == "/history":
+            if not history:
+                console.print("[" + GOD.DIM + "]No messages yet.[/]")
+            else:
+                console.print()
+                console.print(
+                    Panel(
+                        Align.center(
+                            Text.from_markup("[bold " + GOD.WHITE + "]Chat History (" + str(len(history)) + " messages)[/]")
+                        ),
+                        border_style=GOD.CYAN,
+                        box=box.ROUNDED,
+                        padding=(0, 2),
+                    )
+                )
+                for entry in history[-20:]:
+                    role = entry["role"]
+                    content = entry["content"]
+                    if role == "user":
+                        console.print(
+                            Panel(
+                                Text.from_markup("[bold " + GOD.WHITE + "]" + content + "[/]"),
+                                title="[bold " + GOD.CYAN + "]You[/]",
+                                border_style=GOD.CYAN,
+                                box=box.ROUNDED,
+                                padding=(0, 1),
+                            )
+                        )
+                    else:
+                        impact = entry.get("impact", "?")
+                        tier = entry.get("godlike_tier", "?")
+                        console.print(
+                            Panel(
+                                Text.from_markup(content),
+                                title="[bold " + GOD.NEON + "]" + entry["model"] + "[/] [dim]| Impact: " + str(impact) + " | Tier: " + tier + "[/]",
+                                border_style=GOD.NEON,
+                                box=box.ROUNDED,
+                                padding=(0, 1),
+                            )
+                        )
+            continue
+
+        if cmd == "/system":
+            mem_stats = memory.get_memory_stats()
+            console.print(
+                Panel(
+                    Text.from_markup(
+                        "[bold " + GOD.WHITE + "]System Information[/]\n\n"
+                        "[bold " + GOD.CYAN + "]Platform:[/] Melodie-Kimini GODLIKE v3.1.0\n"
+                        "[bold " + GOD.CYAN + "]Model:[/] " + current_model + "\n"
+                        "[bold " + GOD.CYAN + "]Tier:[/] " + m["tier"].upper() + "\n"
+                        "[bold " + GOD.CYAN + "]Context:[/] " + str(m["context"]) + " tokens\n"
+                        "[bold " + GOD.CYAN + "]Speed:[/] " + m["speed"] + "\n"
+                        "[bold " + GOD.CYAN + "]Capabilities:[/] " + ", ".join(m["caps"]) + "\n"
+                        "[bold " + GOD.CYAN + "]Messages:[/] " + str(msg_count) + "\n"
+                        "[bold " + GOD.CYAN + "]Total Tokens:[/] " + str(total_tokens) + "\n"
+                        "[bold " + GOD.NEON + "]Deep Memory:[/] " + str(mem_stats["total_interactions"]) + " stored\n"
+                        "[bold " + GOD.NEON + "]Godlike Score:[/] " + str(mem_stats["godlike_score"]) + "\n"
+                        "[bold " + GOD.NEON + "]Status:[/] ONLINE"
+                    ),
+                    title="[bold " + GOD.GOLD + "]>> SYSTEM <<[/]",
+                    border_style=GOD.GOLD,
+                    box=box.HEAVY,
+                    padding=(1, 2),
+                )
+            )
             continue
 
         if cmd.startswith("/use "):
@@ -929,13 +1191,112 @@ def god_interactive(model=None):
                 current_model = new_resolved
                 m = KIMINI_MODELS[current_model]
                 c = TIER_GLOW.get(m["tier"], GOD.WHITE)
-                console.print("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
-                log_event("SWITCH model=" + current_model)
+                console.print()
+                console.print(
+                    Panel(
+                        Align.center(
+                            Text.from_markup("[bold " + GOD.NEON + "]Switched to: " + current_model + "[/]")
+                        ),
+                        border_style=GOD.NEON,
+                        box=box.ROUNDED,
+                        padding=(0, 2),
+                    )
+                )
+                god_chat_header(current_model)
+                console.print()
+                log_event("CHAT_SWITCH model=" + current_model)
             else:
                 console.print("[bold " + GOD.RED + "]Unknown model: " + new_name + "[/]")
             continue
 
-        god_response(current_model, prompt)
+        msg_count += 1
+        history.append({"role": "user", "content": user_input})
+
+        analysis = reasoning.analyze_interaction(user_input, current_model)
+        impact_score = analysis["impact_score"]
+        godlike_tier = analysis["godlike_tier"]
+        total_impact += impact_score
+
+        related_memory = memory.recall_related(user_input, limit=3)
+        concept_context = memory.get_concept_context(user_input)
+
+        m = KIMINI_MODELS[current_model]
+        c = TIER_GLOW.get(m["tier"], GOD.WHITE)
+        s = TIER_SIGIL.get(m["tier"], ">>")
+        word_count = max(10, min(len(user_input) * 3, m["context"] // 4) // 5)
+        tokens_used = len(user_input) // 4 + word_count
+        total_tokens += tokens_used
+
+        tier_color = reasoning.get_tier_color(godlike_tier)
+
+        resp_content = Table(show_header=False, box=None, padding=(0, 0))
+        resp_content.add_column("K", style="bold " + GOD.CYAN, width=16)
+        resp_content.add_column("V", style="bold " + GOD.WHITE, width=48)
+
+        resp_content.add_row("Model",       "[bold " + c + "]" + current_model + "[/]")
+        resp_content.add_row("Tier",        "[" + c + "]" + s + " " + m["tier"].upper() + "[/]")
+        resp_content.add_row("Context",     str(m["context"]) + " tokens " + ctx_bar(m["context"]))
+        resp_content.add_row("Speed",       speed_bar(m["speed"]) + " " + m["speed"])
+        resp_content.add_row("Tokens",      "[bold " + GOD.NEON + "]UNLIMITED[/]")
+        resp_content.add_row("Prompt",      str(len(user_input)) + " chars")
+        resp_content.add_row("Output",      "~" + str(word_count) + " tokens")
+
+        console.print(
+            Panel(
+                resp_content,
+                title="[bold " + c + "]>> " + current_model.upper() + " <<[/]",
+                border_style=c,
+                box=box.HEAVY,
+                padding=(1, 2),
+            )
+        )
+
+        impact_table = Table(show_header=False, box=None, padding=(0, 0))
+        impact_table.add_column("K", style="bold " + GOD.CYAN, width=16)
+        impact_table.add_column("V", style="bold " + GOD.WHITE, width=30)
+        impact_table.add_column("BAR", style=GOD.NEON, width=14)
+
+        impact_table.add_row("Impact Score",   str(impact_score) + "/100", "[" + GOD.NEON + "]" + reasoning.get_impact_bar(impact_score) + "[/" + GOD.NEON + "]")
+        impact_table.add_row("Godlike Tier",   "[" + tier_color + "]" + godlike_tier + "[/" + tier_color + "]", "")
+        impact_table.add_row("Reasoning",      str(round(analysis["reasoning_depth"], 1)) + "/100", "")
+        impact_table.add_row("Concepts",       ", ".join(analysis["concepts"][:5]), "")
+        impact_table.add_row("Session Impact", str(round(total_impact, 1)), "")
+
+        if related_memory:
+            impact_table.add_row("Memories",   str(len(related_memory)) + " recalled", "")
+        if concept_context:
+            impact_table.add_row("Knowledge",  str(len(concept_context)) + " concepts", "")
+
+        console.print(
+            Panel(
+                impact_table,
+                title="[bold " + GOD.GOLD + "]>> DEEP IMPACT <<[/]",
+                border_style=GOD.GOLD,
+                box=box.HEAVY,
+                padding=(1, 2),
+            )
+        )
+        console.print()
+
+        memory.remember_interaction(
+            user_input, "response_" + str(word_count), current_model,
+            impact_score, analysis
+        )
+
+        history.append({
+            "role": "assistant",
+            "model": current_model,
+            "content": "[Model: " + current_model + "] ~" + str(word_count) + " tokens generated",
+            "impact": impact_score,
+            "godlike_tier": godlike_tier,
+        })
+
+        log_event("CHAT_MSG model=" + current_model + " len=" + str(len(user_input)) + " impact=" + str(impact_score) + " tier=" + godlike_tier)
+
+
+def god_interactive(model=None):
+    """Legacy interactive mode - redirects to chat box."""
+    god_chat_box(model)
 
 
 # ============================================================
@@ -1089,14 +1450,17 @@ def god_toolbox_commands():
     help_table.add_column("WHAT IT DOES", style=GOD.DIM, width=40)
 
     help_table.add_row("[cyan]launch[/]",       "Launch the full command center")
-    help_table.add_row("[cyan]chat[/]",          "Start interactive chat")
-    help_table.add_row("[cyan]run <prompt>[/]",  "Execute a prompt")
+    help_table.add_row("[cyan]chat[/]",          "Start interactive chat (Deep Memory)")
+    help_table.add_row("[cyan]run <prompt>[/]",  "Execute a prompt with impact score")
     help_table.add_row("[cyan]list[/]",          "Show all 56 models")
     help_table.add_row("[cyan]select[/]",        "Open visual model picker")
     help_table.add_row("[cyan]info[/]",          "Show current model details")
     help_table.add_row("[cyan]bench[/]",         "Run full benchmark")
     help_table.add_row("[cyan]efficiency[/]",    "Show performance metrics")
     help_table.add_row("[cyan]status[/]",        "Platform status overview")
+    help_table.add_row("[cyan]memory[/]",        "Deep Memory status & stats")
+    help_table.add_row("[cyan]knowledge[/]",     "Knowledge graph view")
+    help_table.add_row("[cyan]impact[/]",        "Impact score analysis")
     help_table.add_row("[cyan]karma[/]",         "Score prompt for karma")
     help_table.add_row("[cyan]wallet[/]",        "View MA Token wallet")
     help_table.add_row("[cyan]mine[/]",          "Start crypto mining")
@@ -1121,8 +1485,8 @@ def god_toolbox_input_box():
                 Text.from_markup(
                     "[bold " + GOD.WHITE + "]Type a command or prompt below[/]\n"
                     "[" + GOD.DIM + "]Commands: launch, chat, run, list, select, info, bench, "
-                    "efficiency, status, karma, wallet, mine, combo, plans, enterprise, "
-                    "proxy, share, help, clear, quit[/]"
+                    "efficiency, status, memory, knowledge, impact, karma, wallet, mine, "
+                    "combo, plans, enterprise, proxy, share, help, clear, quit[/]"
                 )
             ),
             border_style=GOD.CYAN,
@@ -1254,6 +1618,75 @@ def god_toolbox(model=None):
             console.print("[" + GOD.DIM + "]Usage: run <prompt> to score karma[/]")
             continue
 
+        if cmd == "memory":
+            try:
+                from .deep_memory import DeepMemoryEngine
+                mem = DeepMemoryEngine()
+                stats = mem.get_memory_stats()
+                table = Table(title="[bold " + GOD.GOLD + "]>> DEEP MEMORY <<[/]", box=box.HEAVY, border_style=GOD.GOLD, padding=(0, 1))
+                table.add_column("METRIC", style="bold " + GOD.CYAN, width=22)
+                table.add_column("VALUE", style="bold " + GOD.WHITE, width=30)
+                table.add_column("BAR", style=GOD.NEON, width=12)
+                table.add_row("Interactions", str(stats["total_interactions"]), "")
+                table.add_row("Tokens", str(stats["total_tokens"]), "")
+                table.add_row("Strength", str(stats["memory_strength"]) + "%", "[" + GOD.NEON + "]" + mem.get_memory_strength_bar() + "[/" + GOD.NEON + "]")
+                table.add_row("Concepts", str(stats["concept_count"]), "")
+                table.add_row("Relations", str(stats["relation_count"]), "")
+                table.add_row("Avg Impact", str(stats["avg_impact"]) + "/100", "")
+                table.add_row("Godlike", str(stats["godlike_score"]) + "/100", "[" + GOD.NEON + "]" + mem.get_godlike_bar() + "[/" + GOD.NEON + "]")
+                console.print(table)
+                if stats["strongest_concepts"]:
+                    console.print("[" + GOD.DIM + "]Top: " + ", ".join(stats["strongest_concepts"][:8]) + "[/]")
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "knowledge":
+            try:
+                from .deep_memory import DeepMemoryEngine
+                mem = DeepMemoryEngine()
+                kg = mem.get_knowledge_graph_summary()
+                console.print(Panel(Align.center(Text.from_markup("[bold " + GOD.WHITE + "]>> KNOWLEDGE GRAPH <<[/]")), border_style=GOD.MAGENTA, box=box.HEAVY, padding=(0, 2)))
+                if kg["top_concepts"]:
+                    ct = Table(title="[bold " + GOD.CYAN + "]CONCEPTS[/]", box=box.ROUNDED, border_style=GOD.CYAN, padding=(0, 1))
+                    ct.add_column("#", style=GOD.DIM, width=3)
+                    ct.add_column("CONCEPT", style="bold " + GOD.WHITE, width=25)
+                    for i, concept in enumerate(kg["top_concepts"][:10], 1):
+                        ct.add_row(str(i), concept)
+                    console.print(ct)
+                if kg["top_relations"]:
+                    rt = Table(title="[bold " + GOD.MAGENTA + "]RELATIONS[/]", box=box.ROUNDED, border_style=GOD.MAGENTA, padding=(0, 1))
+                    rt.add_column("FROM", style="bold " + GOD.CYAN, width=18)
+                    rt.add_column("TO", style="bold " + GOD.CYAN, width=18)
+                    rt.add_column("W", style=GOD.NEON, width=8)
+                    for rel in kg["top_relations"][:8]:
+                        rt.add_row(rel["from"], rel["to"], str(rel["weight"]))
+                    console.print(rt)
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
+        if cmd == "impact":
+            try:
+                from .deep_reasoning import DeepReasoningEngine
+                reason = DeepReasoningEngine()
+                stats = reason.get_session_stats()
+                console.print(Panel(
+                    Text.from_markup(
+                        "[bold " + GOD.WHITE + "]>> IMPACT ANALYSIS <<[/]\n\n"
+                        "[bold " + GOD.CYAN + "]Session Messages:[/] " + str(stats["count"]) + "\n"
+                        "[bold " + GOD.CYAN + "]Avg Impact:[/] " + str(stats["avg"]) + "/100\n"
+                        "[bold " + GOD.CYAN + "]Max Impact:[/] " + str(stats["max"]) + "/100\n"
+                        "[bold " + GOD.CYAN + "]Total Impact:[/] " + str(round(stats["total"], 1)) + "\n"
+                        "[bold " + GOD.NEON + "]Godlike Score:[/] " + str(stats["godlike_avg"]) + "/1000"
+                    ),
+                    title="[bold " + GOD.GOLD + "]>> IMPACT <<[/]",
+                    border_style=GOD.GOLD, box=box.HEAVY, padding=(1, 2),
+                ))
+            except Exception as e:
+                console.print("[bold " + GOD.RED + "]Error: " + str(e) + "[/]")
+            continue
+
         if cmd == "wallet":
             try:
                 from .ma_token import MATokenWallet
@@ -1379,7 +1812,32 @@ def god_toolbox(model=None):
         if cmd.startswith("run "):
             prompt_text = user_input.strip()[4:]
             if prompt_text:
-                god_response(current_model, prompt_text)
+                try:
+                    from .deep_reasoning import DeepReasoningEngine
+                    from .deep_memory import DeepMemoryEngine
+                    reason = DeepReasoningEngine()
+                    mem = DeepMemoryEngine()
+                    analysis = reason.analyze_interaction(prompt_text, current_model)
+                    impact_score = analysis["impact_score"]
+                    godlike_tier = analysis["godlike_tier"]
+                    tier_color = reason.get_tier_color(godlike_tier)
+
+                    god_response(current_model, prompt_text)
+
+                    impact_table = Table(show_header=False, box=None, padding=(0, 0))
+                    impact_table.add_column("K", style="bold " + GOD.CYAN, width=16)
+                    impact_table.add_column("V", style="bold " + GOD.WHITE, width=30)
+                    impact_table.add_column("BAR", style=GOD.NEON, width=14)
+                    impact_table.add_row("Impact Score", str(impact_score) + "/100", "[" + GOD.NEON + "]" + reason.get_impact_bar(impact_score) + "[/" + GOD.NEON + "]")
+                    impact_table.add_row("Godlike Tier", "[" + tier_color + "]" + godlike_tier + "[/" + tier_color + "]", "")
+                    impact_table.add_row("Reasoning", str(round(analysis["reasoning_depth"], 1)) + "/100", "")
+                    impact_table.add_row("Concepts", ", ".join(analysis["concepts"][:5]), "")
+
+                    console.print(Panel(impact_table, title="[bold " + GOD.GOLD + "]>> DEEP IMPACT <<[/]", border_style=GOD.GOLD, box=box.HEAVY, padding=(1, 2)))
+
+                    mem.remember_interaction(prompt_text, "response", current_model, impact_score, analysis)
+                except Exception as e:
+                    god_response(current_model, prompt_text)
             else:
                 console.print("[" + GOD.DIM + "]Usage: run <your prompt>[/]")
             continue
