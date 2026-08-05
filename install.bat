@@ -15,19 +15,40 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 if not exist "%INSTALL_DIR%\data" mkdir "%INSTALL_DIR%\data"
 if not exist "%INSTALL_DIR%\logs" mkdir "%INSTALL_DIR%\logs"
 
-copy /Y "%~dp0Melodie-Kimini.exe" "%INSTALL_DIR%\" >nul 2>&1
+if exist "%~dp0Melodie-Kimini.exe" (
+    copy /Y "%~dp0Melodie-Kimini.exe" "%INSTALL_DIR%\" >nul 2>&1
+    if %ERRORLEVEL% EQU 0 (
+        echo [OK] Melodie-Kimini.exe installed.
+        set LAUNCHER=%INSTALL_DIR%\Melodie-Kimini.exe
+        goto :makelaunchers
+    )
+    echo [WARN] Copying Melodie-Kimini.exe failed; falling back to Python install.
+)
+
+echo [INFO] Melodie-Kimini.exe not found; installing Python package instead...
+where python >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Melodie-Kimini.exe not found in installer directory.
+    echo [ERROR] Python is not installed or not on PATH.
+    echo         Install Python 3.8+ from https://www.python.org then re-run this installer.
     pause
     exit /b 1
 )
 
-echo [OK] Melodie-Kimini.exe installed.
+python -m pip install --upgrade pip >nul 2>&1
+python -m pip install -e "%~dp0." >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] pip install failed. See output above.
+    pause
+    exit /b 1
+)
+echo [OK] Python package installed.
+set LAUNCHER=Melodie-Kimini
 
+:makelaunchers
 (
     echo @echo off
     echo title Melodie-Kimini
-    echo "%INSTALL_DIR%\Melodie-Kimini.exe" %%*
+    echo "%LAUNCHER%" %%*
     echo pause
 ) > "%INSTALL_DIR%\Kimini.bat"
 
@@ -36,7 +57,7 @@ echo [OK] Kimini.bat launcher created.
 (
     echo @echo off
     echo title Kimini Chat
-    echo "%INSTALL_DIR%\Melodie-Kimini.exe" chat
+    echo "%LAUNCHER%" chat
     echo pause
 ) > "%INSTALL_DIR%\Kimini-Chat.bat"
 
@@ -45,7 +66,7 @@ echo [OK] Kimini-Chat.bat launcher created.
 (
     echo @echo off
     echo title Kimini Status
-    echo "%INSTALL_DIR%\Melodie-Kimini.exe" status
+    echo "%LAUNCHER%" status
     echo pause
 ) > "%INSTALL_DIR%\Kimini-Status.bat"
 

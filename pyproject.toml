@@ -31,6 +31,19 @@ dependencies = [
     "rich>=13.0",
 ]
 
+[project.optional-dependencies]
+relay = [
+    "litellm>=1.40",
+    "stripe>=7.0",
+]
+test = [
+    "pytest>=7.0",
+]
+dev = [
+    "pytest>=7.0",
+    "build>=0.10",
+]
+
 [project.urls]
 Homepage = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning"
 Repository = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning"
@@ -38,9 +51,11 @@ Issues = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimit
 
 [project.scripts]
 Melodie-Kimini = "melodie_kimini.cli:main"
+kimini-relay = "melodie_relay.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["melodie_kimini*"]
+include = ["melodie_kimini*", "melodie_relay*"]
 
 [tool.setuptools.package-data]
 melodie_kimini = ["*.json"]
+melodie_relay = ["models/*.yaml"]

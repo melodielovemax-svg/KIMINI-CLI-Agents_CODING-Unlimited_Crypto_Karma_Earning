@@ -1,2 +1,5 @@
 click>=8.0
 rich>=13.0
+litellm>=1.40
+stripe>=7.0
+pytest>=7.0

@@ -43,3 +43,6 @@ data/
 *.tar.gz
 *.whl
 *.zip
+
+# Runtime-generated config
+config/kimini.json

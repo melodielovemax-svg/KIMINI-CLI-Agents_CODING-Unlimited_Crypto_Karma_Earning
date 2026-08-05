@@ -11,6 +11,11 @@ async def chat_command(args):
 
 async def run_command(args):
     print(f"Running task with prompt: {args.prompt}")
+    try:
+        result = await run(args.prompt)
+        print(result)
+    except Exception as e:
+        print(f"ERROR: {e}")
 
 
 async def test_command(args):
@@ -51,17 +56,15 @@ def main():
 
     args = parser.parse_args()
 
-    loop = asyncio.get_event_loop()
-    if args.command == "chat":
-        loop.run_until_complete(chat_command(args))
-    elif args.command == "run":
-        loop.run_until_complete(run_command(args))
-    elif args.command == "test":
-        loop.run_until_complete(test_command(args))
-    elif args.command == "models":
-        loop.run_until_complete(models_command(args))
-    elif args.command == "status":
-        loop.run_until_complete(status_command(args))
+    command_map = {
+        "chat": chat_command,
+        "run": run_command,
+        "test": test_command,
+        "models": models_command,
+        "status": status_command,
+    }
+    handler = command_map[args.command]
+    asyncio.run(handler(args))
 
 
 if __name__ == "__main__":
