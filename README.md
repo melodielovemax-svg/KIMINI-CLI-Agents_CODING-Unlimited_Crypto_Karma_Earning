@@ -9,6 +9,41 @@
 
 ---
 
+## Deployment Modes — READ FIRST
+
+This project runs in **two distinct modes**. Know which one you are in.
+
+### Local Simulation Mode (default)
+
+- Karma Power Points, MA Token balances, mining rewards, staking, and all
+  "Unlimited Tokens" figures are **synthetic demo data** for demonstration and
+  gamification only.
+- No real money, cryptocurrency, or financial value is created, transferred, or
+  stored. Nothing can be withdrawn or exchanged.
+- The 56 model catalog and "crypto economy" are **local metadata and simulation** —
+  no AI inference or blockchain is contacted.
+- All such data is generated locally and must be treated as **SYNTHETIC** demo data.
+
+### Production Relay Mode (opt-in)
+
+The bundled `melodie_relay` gateway is the only path that talks to real systems:
+
+- Requires `pip install "melodie-kimini[relay]"` (adds `litellm` and `stripe`).
+- Requires a real `KIMI_API_KEY` and a supported backend model
+  (`KIMI_MODEL`, default `kimi-flash-6.9`).
+- `kimini-relay chat` / `kimini-relay run` route prompts to a real model provider.
+- Billing metering (`billing/stripe_meter.py`) requires a real `STRIPE_SECRET_KEY`
+  and a configured Stripe account before it meters anything.
+- Without keys, the relay **fails gracefully** and records an audit event — it
+  never fabricates a response.
+
+> **Governance note:** Neither mode ever fabricates financial, revenue, or
+> transaction data. If you integrate billing or accounting systems, only use
+> verified provider data (Stripe, Plaid, etc.) and keep all demo figures labeled
+> as SYNTHETIC.
+
+---
+
 ## Quick Install
 
 ```bash
@@ -244,6 +279,31 @@ Twitter/X, Facebook, LinkedIn, Reddit, WhatsApp, Telegram, Instagram, Pinterest,
 
 - `click>=8.0` - CLI framework
 - `rich>=13.0` - Terminal UI
+
+### Optional (Production Relay Mode)
+
+```bash
+pip install "melodie-kimini[relay]"
+```
+
+- `litellm>=1.40` - model gateway (required for real chat/run)
+- `stripe>=7.0` - billing metering (optional unless integrating Stripe)
+
+### Development
+
+```bash
+pip install -e ".[test]"
+pytest
+```
+
+### Relay CLI
+
+```bash
+kimini-relay models     # List all 56 models
+kimini-relay status     # Platform status
+kimini-relay chat       # Interactive chat (requires KIMI_API_KEY + relay extras)
+kimini-relay run "..."  # Run a prompt through the gateway
+```
 
 ---
 
