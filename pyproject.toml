@@ -29,6 +29,8 @@ classifiers = [
 dependencies = [
     "click>=8.0",
     "rich>=13.0",
+    "web3>=7.0",
+    "pycryptodome>=3.20",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +45,10 @@ dev = [
     "pytest>=7.0",
     "build>=0.10",
 ]
+web3 = [
+    "eth-tester>=0.13",
+    "py-evm>=0.12",
+]
 
 [project.urls]
 Homepage = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimited_Crypto_Karma_Earning"
@@ -52,10 +58,12 @@ Issues = "https://github.com/melodielovemax-svg/KIMINI-CLI-Agents_CODING-Unlimit
 [project.scripts]
 Melodie-Kimini = "melodie_kimini.cli:main"
 kimini-relay = "melodie_relay.cli:main"
+karma-eco = "karma_ecosystem.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["melodie_kimini*", "melodie_relay*"]
+include = ["melodie_kimini*", "melodie_relay*", "karma_ecosystem*"]
 
 [tool.setuptools.package-data]
 melodie_kimini = ["*.json"]
 melodie_relay = ["models/*.yaml"]
+karma_ecosystem = ["contracts/build/*.json"]

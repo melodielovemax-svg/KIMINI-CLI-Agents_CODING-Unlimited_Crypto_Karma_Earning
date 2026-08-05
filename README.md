@@ -316,3 +316,110 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Author
 
 Melodiespark Inc - https://github.com/melodielovemax-svg
+
+
+---
+
+# ⚖️ Karma Ecosystem — Web3 Automation System (karma-eco)
+
+A complete automation system that rewards **services & good deeds** with
+**Karma Power Points**, mints **MA tokens** (real on-chain tokenomics),
+swaps into **ETH / USDT / BTC**, mines crypto, and **automatically pays app
+builders & coding agents** from a treasury — every step is a **real
+blockchain transaction with a real hash**.
+
+> **Mode warning:** default = **local simulation** (embedded real EVM, real
+> hashes, SYNTHETIC value). Testnets (Sepolia / Polygon Amoy) optional. See
+> `docs/LEGAL_NEXUS.md` before any real-money deployment.
+
+## Quick start
+
+```bash
+pip install -e .            # installs the karma-eco console script
+
+# terminal 1 — start the persistent local blockchain (Ganache, chainId 1337)
+npm --prefix karma_ecosystem/scripts install     # once
+node karma_ecosystem/scripts/localnode.mjs
+
+# terminal 2 — everything now runs against ONE persistent chain
+karma-eco init              # deploy 8 contracts + wire roles + seed pools
+karma-eco status            # network / chain / block
+```
+
+## End-to-end flow (all real txs)
+
+```bash
+karma-eco register Alice --plan 1 --password s3cret   # wallet + encrypted vault record
+karma-eco subscribe sub_xxx --plan 1 --password s3cret  # pay plan (hash H1)
+karma-eco deed sub_xxx --service "code review" --impact 7         --beneficiary 0x... --password s3cret          # KARMA minted (H2)
+karma-eco convert sub_xxx --karma 70 --password s3cret # KARMA -> 700 MA (H3,H4)
+karma-eco mine sub_xxx --password s3cret               # mine 100 MA (H5)
+karma-eco swap sub_xxx --target btc --ma 100 --password s3cret  # MA -> BTC (H6,H7)
+karma-eco sweep sub_xxx --to 0xYourMetaMask --token ma --password s3cret
+karma-eco treasury          # fee split + collected totals
+karma-eco tokenomics        # MA supply / allocations / pools / rates
+karma-eco verify <txhash>   # any hash -> receipt, block, status
+```
+
+## Bot Revenue Automation (A-Z self-running workflow)
+
+```bash
+karma-eco bot status        # version, phases, tasks
+karma-eco bot run           # execute the 37-task DAG (ALPHA..OMEGA)
+karma-eco bot release       # auto-release new bot version + refreshed catalog
+karma-eco bot timeline      # 26-phase quantum fractal timeline
+karma-eco bot tasks         # full tasklist
+karma-eco keeper            # automation loop: auto-renew expired subscriptions
+```
+
+Every `bot run` appends `data/automation/execution_log.json`; every
+`bot release` bumps the version, regenerates the **products & services
+offering manifest** (`data/automation/offerings.json`) and appends
+`CHANGELOG.md`.
+
+## On-chain contracts (Solidity 0.8 / OpenZeppelin 5)
+
+| Contract | Role |
+|---|---|
+| `KarmaToken` | KARMA reward token (minted per verified good deed) |
+| `GoodDeedRegistry` | on-chain registry: deed → KARMA = 10 × impact score |
+| `KarmaSubscription` | Ultimate Pays plans; splits payment 20% treasury / 80% protocol |
+| `KarmaTreasury` | fee treasury + keeper automation pays coding agents |
+| `MAToken` | MA gamified token, 1B hard cap, 40/25/20/10/5% allocations |
+| `KarmaSwap` | MA → ETH / USDT / BTC at treasury-set rates (MA burned) |
+| `MiningRig` | mine 100 MA / block (cooldown 60s) + sweep to any wallet |
+| `PeggedToken` | wUSDT / wBTC demo representations (real assets on mainnet) |
+
+## Docs
+
+- `docs/ARCHITECTURE.md` — system design & flows
+- `docs/TOKENOMICS.md` — MA supply, allocations, swap rates, fees
+- `docs/LEGAL_NEXUS.md` — compliance, privacy, KYC/AML, disclaimers
+- `docs/1000-TODOS-QUANTUM-WORKFLOW.md` — **1000 todos**, A-Z phases
+- `scripts/generate_1000_todos.py` — regenerates the 1000-todo document
+
+## Tests
+
+```bash
+python -m pytest karma_ecosystem/tests
+```
+
+Covers deploy, lifecycle, fee split, treasury payouts, swap math, mining,
+sweep, vault encryption/tamper, tokenomics and the full bot workflow.
+
+## Networks
+
+| id | network | RPC | notes |
+|---|---|---|---|
+| `localnode` (default) | persistent Ganache | `http://127.0.0.1:8545` | same chain across all commands; run `node karma_ecosystem/scripts/localnode.mjs` |
+| `local` | embedded EVM | — | instant real hashes, per-command chain (tests) |
+| `sepolia` | Ethereum testnet | publicnode | needs `KARMA_DEPLOYER_KEY` + funds |
+| `polygon_amoy` | Polygon testnet | amoy | same, POL for gas |
+
+```bash
+karma-eco --network sepolia init
+karma-eco --network sepolia status
+```
+
+*See `docs/LEGAL_NEXUS.md` — all demo figures are SYNTHETIC; nothing here is
+financial advice or an offer of securities.*

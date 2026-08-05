@@ -46,3 +46,7 @@ data/
 
 # Runtime-generated config
 config/kimini.json
+
+# Karma Ecosystem runtime state
+karma_ecosystem/data/
+node_modules/
